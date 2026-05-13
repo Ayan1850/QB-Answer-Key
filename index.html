@@ -26,9 +26,9 @@
   .cell-num { font-size: 10px; color: var(--text2); }
   .cell-ans { font-size: 22px; font-weight: 600; color: var(--gold); }
 
-  .btn, .small-btn { padding: 12px; background: var(--gold); color: #0d1b2a; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; margin: 8px 0; }
+  .btn, .small-btn { padding: 12px; background: var(--gold); color: #0d1b2a; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
   .btn-red { background: var(--red); color: white; }
-  .small-btn { width: auto; padding: 8px 14px; font-size: 13px; }
+  .small-btn { padding: 8px 14px; font-size: 13px; }
 
   .readonly-banner { background: #1e3050; color: #c9a84c; text-align: center; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
   .edit-banner { background: #4caf82; color: white; text-align: center; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
@@ -43,8 +43,9 @@
 
   <div id="mode-banner"></div>
 
-  <div style="text-align:center; margin-bottom:15px;">
+  <div style="text-align:center; margin:10px 0 20px;">
     <button class="small-btn" onclick="showSettings()">⚙️ Settings</button>
+    <button class="small-btn" onclick="forceRefresh()" style="margin-left:8px;">🔄 Refresh</button>
   </div>
 
   <div id="tabs"></div>
@@ -74,39 +75,45 @@ function loadConfig() {
   const saved = localStorage.getItem("gennav_config");
   if (saved) config = JSON.parse(saved);
 }
-function saveConfig() { localStorage.setItem("gennav_config", JSON.stringify(config)); }
+function saveConfig() {
+  localStorage.setItem("gennav_config", JSON.stringify(config));
+}
 
 async function githubRequest(method = "GET", body = null) {
   if (!config.token) throw new Error("No token");
-  const url = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.filename}`;
-  const res = await fetch(method === "GET" ? url + `?ref=${config.branch}` : url, {
+  const url = `https://api.github.com/repos/${USERNAME}/${REPO}/contents/gennav-keys.json`;
+  const res = await fetch(method === "GET" ? url + `?ref=main` : url, {
     method,
-    headers: { "Authorization": `token ${config.token}`, "Accept": "application/vnd.github.v3+json", "Content-Type": "application/json" },
+    headers: {
+      "Authorization": `token ${config.token}`,
+      "Accept": "application/vnd.github.v3+json",
+      "Content-Type": "application/json"
+    },
     body: body ? JSON.stringify(body) : null
   });
   if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`Error ${res.status}`);
+  if (!res.ok) throw new Error(`GitHub Error ${res.status}`);
   return res.json();
 }
 
 async function loadFromGitHub() {
-  document.getElementById("mode-banner").innerHTML = `<div class="readonly-banner">Loading...</div>`;
+  document.getElementById("mode-banner").innerHTML = `<div class="readonly-banner">Loading latest data...</div>`;
 
-  // Try Edit Mode First
+  // Try Edit Mode with Token
   if (config.token) {
     try {
       const data = await githubRequest("GET");
       if (data) {
         papers = JSON.parse(atob(data.content));
         isReadOnly = false;
-        document.getElementById("mode-banner").innerHTML = `<div class="edit-banner">✏️ Editing Mode Active</div>`;
+        document.getElementById("mode-banner").innerHTML = `<div class="edit-banner">✏️ Editing Mode - Changes will sync across devices</div>`;
         render();
         return;
       }
-    } catch(e) {}
+    } catch(e) { console.log("Token failed", e); }
   }
 
-  // Fallback to Public
+  // Public Read-only
   try {
     const res = await fetch(PUBLIC_URL + "?t=" + Date.now());
     if (res.ok) papers = await res.json();
@@ -123,13 +130,23 @@ async function saveToGitHub() {
   if (isReadOnly || !config.token) return;
   try {
     let sha = null;
-    const existing = await githubRequest("GET");
-    if (existing) sha = existing.sha;
+    try {
+      const existing = await githubRequest("GET");
+      if (existing) sha = existing.sha;
+    } catch(e) {}
 
     const content = btoa(JSON.stringify(papers, null, 2));
-    await githubRequest("PUT", { message: "Update Keys", content, sha, branch: config.branch });
+    await githubRequest("PUT", {
+      message: `Update ${new Date().toISOString().slice(0,16)}`,
+      content: content,
+      sha: sha,
+      branch: "main"
+    });
     showToast("✅ Saved to GitHub");
-  } catch(e) { showToast("⚠️ Saved locally"); }
+  } catch(e) {
+    showToast("⚠️ Save failed");
+    console.error(e);
+  }
 }
 
 function save() {
@@ -138,16 +155,24 @@ function save() {
 }
 
 function parseAnswers(raw) {
-  return raw.trim().split('\n').map(l => l.trim().match(/([A-D])/i)?.[1]?.toUpperCase()).filter(Boolean);
+  return raw.trim().split('\n')
+    .map(l => l.trim().match(/([A-D])/i)?.[1]?.toUpperCase())
+    .filter(Boolean);
 }
 
 function showToast(msg) {
   const t = document.getElementById("toast");
-  t.textContent = msg; t.classList.add("show");
+  t.textContent = msg;
+  t.classList.add("show");
   setTimeout(() => t.classList.remove("show"), 2800);
 }
 
-// ================= RENDER =================
+function forceRefresh() {
+  showToast("Refreshing from GitHub...");
+  loadFromGitHub();
+}
+
+// ================= UI RENDER =================
 function render() {
   const tabs = document.getElementById('tabs');
   tabs.innerHTML = '';
@@ -206,11 +231,11 @@ function renderForm() {
       <h3>${isEdit ? 'Edit Paper' : 'Add New Paper'}</h3>
       <div style="margin:12px 0;">
         <label style="color:var(--gold);font-size:13px;">Batch Name</label>
-        <input id="title" class="form-input" value="${paper?.title || ''}" style="width:100%;padding:12px;background:var(--navy3);border:1px solid #334766;border-radius:8px;color:white;">
+        <input id="title" value="${paper?.title || ''}" style="width:100%;padding:12px;background:var(--navy3);border:1px solid #334766;border-radius:8px;color:white;">
       </div>
       <div style="margin:12px 0;">
         <label style="color:var(--gold);font-size:13px;">Paper Code</label>
-        <input id="code" class="form-input" value="${paper?.code || ''}" style="width:100%;padding:12px;background:var(--navy3);border:1px solid #334766;border-radius:8px;color:white;">
+        <input id="code" value="${paper?.code || ''}" style="width:100%;padding:12px;background:var(--navy3);border:1px solid #334766;border-radius:8px;color:white;">
       </div>
       <div style="margin:12px 0;">
         <label style="color:var(--gold);font-size:13px;">Answers (one per line)</label>
@@ -221,13 +246,13 @@ function renderForm() {
     </div>`;
 }
 
-// CRUD Functions
+// CRUD
 window.addPaper = function() {
   const title = document.getElementById('title').value.trim();
   const code = document.getElementById('code').value.trim();
   const raw = document.getElementById('answers').value;
   const answers = parseAnswers(raw);
-  if (!title || answers.length === 0) return showToast("Please fill title and answers");
+  if (!title || answers.length === 0) return showToast("Title and answers required");
   const id = 'p_' + Date.now();
   papers.push({id, title, code: code || title, answers});
   save();
@@ -245,7 +270,7 @@ window.updatePaper = function() {
   save();
   editingPaperId = null;
   render();
-  showToast("✅ Updated");
+  showToast("✅ Paper Updated");
 };
 
 window.startEdit = function(id) {
@@ -271,7 +296,7 @@ window.deletePaper = function(id) {
 window.editAnswer = function(paperId, index) {
   const paper = papers.find(p => p.id === paperId);
   if (!paper) return;
-  const newAns = prompt(`Q${index+1} (${paper.answers[index]}) → New answer:`, paper.answers[index]);
+  const newAns = prompt(`Q${index+1} currently ${paper.answers[index]}\nNew answer (A/B/C/D):`, paper.answers[index]);
   if (newAns && /^[A-D]$/i.test(newAns)) {
     paper.answers[index] = newAns.toUpperCase();
     save();
@@ -282,20 +307,20 @@ window.editAnswer = function(paperId, index) {
 window.showSettings = function() {
   document.getElementById("content").innerHTML = `
     <div class="paper-card" style="padding:20px;">
-      <h3>Enable Editing</h3>
-      <input type="password" id="token" value="${config.token}" placeholder="Paste GitHub Token" style="width:100%;padding:12px;margin:10px 0;background:var(--navy3);border:1px solid #334766;border-radius:8px;color:white;">
-      <button class="btn" onclick="saveToken()">Save Token & Enable Editing</button>
+      <h3>GitHub Token (for editing)</h3>
+      <input type="password" id="token-input" value="${config.token}" placeholder="Paste your token here" style="width:100%;padding:12px;margin:10px 0;background:var(--navy3);border:1px solid #334766;border-radius:8px;color:white;">
+      <button class="btn" onclick="saveNewToken()">Save Token</button>
     </div>`;
 };
 
-window.saveToken = function() {
-  config.token = document.getElementById("token").value.trim();
+window.saveNewToken = function() {
+  config.token = document.getElementById("token-input").value.trim();
   saveConfig();
-  showToast("Token saved. Reloading edit mode...");
-  setTimeout(() => loadFromGitHub(), 800);
+  showToast("Token saved. Trying to switch to edit mode...");
+  setTimeout(() => loadFromGitHub(), 1000);
 };
 
-// Start
+// Start App
 loadConfig();
 loadFromGitHub();
 </script>
