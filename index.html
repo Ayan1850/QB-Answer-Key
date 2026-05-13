@@ -3,70 +3,53 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gen Nav — Answer Keys</title>
+<title>Gen Nav Answer Keys</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
     --navy: #0d1b2a; --navy2: #152235; --navy3: #1e3050;
-    --gold: #c9a84c; --gold2: #e8c97a; --cream: #f5f0e8;
-    --slate: #8fa3b8; --text: #e8e0d5; --text2: #b0c0d0;
+    --gold: #c9a84c; --cream: #f5f0e8; --text2: #b0c0d0;
     --green: #4caf82; --red: #e05c5c; --radius: 12px;
   }
-  body { background: var(--navy); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
-  .app { max-width: 480px; margin: 0 auto; padding: 24px 16px 100px; }
+  body { background: var(--navy); color: var(--cream); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+  .app { max-width: 480px; margin: 0 auto; padding: 20px 16px; }
 
-  .header { text-align: center; margin-bottom: 20px; padding-top: 8px; }
-  .header-eyebrow { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.2em; color: var(--gold); text-transform: uppercase; margin-bottom: 6px; }
-  .header-title { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--cream); line-height: 1.15; }
-  .header-sub { font-size: 12px; color: var(--text2); }
+  .header { text-align: center; margin-bottom: 25px; }
+  .header-title { font-family: 'Playfair Display', serif; font-size: 28px; line-height: 1.1; }
 
-  .tabs { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 4px; }
-  .tab { font-family: 'DM Mono', monospace; font-size: 11px; padding: 8px 16px; border-radius: 30px; border: 1px solid var(--navy3); background: transparent; color: var(--text2); cursor: pointer; white-space: nowrap; }
-  .tab.active { background: var(--gold); color: #0d1b2a; border-color: var(--gold); font-weight: 500; }
-
-  .paper-card { background: var(--navy2); border: 1px solid var(--navy3); border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; }
-  .paper-header { padding: 16px 18px 14px; border-bottom: 1px solid var(--navy3); display: flex; justify-content: space-between; }
-  .answer-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--navy3); }
-  .answer-cell { background: var(--navy2); padding: 12px 6px; text-align: center; cursor: pointer; }
-  .cell-num { font-size: 10px; color: var(--text2); }
-  .cell-ans { font-size: 22px; font-weight: 600; color: var(--gold); }
-
-  .btn, .small-btn { padding: 12px; background: var(--gold); color: #0d1b2a; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; margin: 6px 0; }
+  .small-btn, .btn { padding: 12px 20px; background: var(--gold); color: #0d1b2a; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
   .btn-red { background: var(--red); color: white; }
-  .small-btn { width: auto; padding: 8px 14px; font-size: 12px; }
+  .small-btn { font-size: 13px; }
 
-  .settings-panel { background: var(--navy2); padding: 20px; border-radius: var(--radius); margin: 15px 0; }
-  .form-label { display: block; margin: 12px 0 6px; font-size: 12px; color: var(--gold); }
-  .form-input { width: 100%; padding: 12px; background: var(--navy3); border: 1px solid #2a4060; border-radius: 8px; color: white; font-size: 15px; }
+  .settings-panel { background: var(--navy2); padding: 24px; border-radius: var(--radius); margin: 15px 0; }
+  .form-label { font-size: 13px; color: var(--gold); margin: 16px 0 8px; display: block; }
+  .form-input { width: 100%; padding: 14px; background: var(--navy3); border: 1px solid #334766; border-radius: 8px; color: white; font-size: 15px; }
 
-  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--green); color: #fff; padding: 12px 24px; border-radius: 30px; opacity: 0; transition: all 0.3s; z-index: 100; }
+  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--green); color: white; padding: 14px 24px; border-radius: 999px; z-index: 999; opacity: 0; transition: 0.4s; }
   .toast.show { opacity: 1; }
 </style>
 </head>
 <body>
 <div class="app">
   <div class="header">
-    <div class="header-eyebrow">DGCA · CPL / ATPL</div>
     <div class="header-title">General Navigation<br>Answer Keys</div>
-    <div class="header-sub">GitHub Synced</div>
   </div>
 
-  <div style="text-align:center; margin-bottom:15px;">
+  <div style="text-align:center; margin-bottom:20px;">
     <button class="small-btn" onclick="showSettings()">⚙️ GitHub Settings</button>
   </div>
 
-  <div class="tabs" id="tabs"></div>
+  <div id="tabs"></div>
   <div id="content"></div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-let config = { token: '', owner: '', repo: 'gennav-keys', branch: 'main', filename: 'gennav-keys.json' };
+let config = { token: "", owner: "", repo: "gennav-keys", branch: "main", filename: "gennav-keys.json" };
 let papers = [];
-let activeTab = 'apr';
-let editingPaperId = null;
+let activeTab = "apr";
 
 const SEED = [
   { id: 'apr', title: 'April Batch', code: 'GN-APR-2025', answers: ['C','C','C','B','D','C','B','C','B','B','B','D','C','D','D','A','D','D','B','B','C','D','D','D','B'] },
@@ -74,67 +57,72 @@ const SEED = [
 ];
 
 function loadConfig() {
-  const saved = localStorage.getItem('gennav_github_config');
+  const saved = localStorage.getItem("gennav_config");
   if (saved) config = JSON.parse(saved);
 }
-function saveConfig() { localStorage.setItem('gennav_github_config', JSON.stringify(config)); }
+function saveConfig() {
+  localStorage.setItem("gennav_config", JSON.stringify(config));
+}
 
-async function githubRequest(method = 'GET', body = null) {
-  if (!config.token || !config.owner || !config.repo) throw new Error("GitHub not configured");
+async function githubRequest(method = "GET", body = null) {
+  if (!config.token || !config.owner || !config.repo) throw new Error("Not configured");
+  
   const url = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.filename}`;
-  const res = await fetch(url + (method === 'GET' ? `?ref=${config.branch}` : ''), {
-    method,
+  const res = await fetch(method === "GET" ? url + `?ref=${config.branch}` : url, {
+    method: method,
     headers: {
-      'Authorization': `token ${config.token}`,
-      'Accept': 'application/vnd.github.v3+json',
-      'Content-Type': 'application/json'
+      "Authorization": `token ${config.token}`,
+      "Accept": "application/vnd.github.v3+json",
+      "Content-Type": "application/json"
     },
-    body: body ? JSON.stringify(body) : undefined
+    body: body ? JSON.stringify(body) : null
   });
+
   if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`GitHub Error: ${res.status}`);
+  if (!res.ok) throw new Error(`GitHub Error ${res.status} - Check token permissions`);
   return res.json();
 }
 
-async function showSettings() {
-  document.getElementById('content').innerHTML = `
+window.showSettings = function() {
+  document.getElementById("content").innerHTML = `
     <div class="settings-panel">
-      <h3 style="color:var(--gold);margin-bottom:15px">GitHub Connection</h3>
-      <div class="form-label">Personal Access Token</div>
-      <input class="form-input" id="token" type="password" value="${config.token}" placeholder="ghp_...">
-      
+      <h3 style="color:#c9a84c">GitHub Settings</h3>
+      <div class="form-label">Token (github_pat_...)</div>
+      <input class="form-input" id="g-token" type="password" value="${config.token}">
       <div class="form-label">GitHub Username</div>
-      <input class="form-input" id="owner" value="${config.owner}" placeholder="yourusername">
-      
+      <input class="form-input" id="g-owner" value="${config.owner}">
       <div class="form-label">Repository Name</div>
-      <input class="form-input" id="repo" value="${config.repo}" placeholder="gennav-keys">
-      
-      <button class="btn" onclick="saveAndTest()">Save & Test Connection</button>
-      <button class="btn btn-red" onclick="render()">Close</button>
+      <input class="form-input" id="g-repo" value="${config.repo}">
+      <button class="btn" onclick="saveSettings()">Save & Test Connection</button>
     </div>`;
-}
+};
 
-window.saveAndTest = async function() {
-  config.token = document.getElementById('token').value.trim();
-  config.owner = document.getElementById('owner').value.trim();
-  config.repo = document.getElementById('repo').value.trim();
+window.saveSettings = async function() {
+  config.token = document.getElementById("g-token").value.trim();
+  config.owner = document.getElementById("g-owner").value.trim();
+  config.repo = document.getElementById("g-repo").value.trim();
   saveConfig();
+
+  showToast("Testing connection...");
   
   try {
-    await githubRequest('GET');
-    showToast("✅ Connected successfully!");
-    setTimeout(loadFromGitHub, 600);
+    await githubRequest("GET");
+    showToast("✅ Successfully connected to GitHub!");
+    setTimeout(() => loadFromGitHub(), 1000);
   } catch(e) {
-    showToast("❌ Connection failed. Check token/repo.");
+    showToast("❌ Connection failed. " + e.message);
   }
 };
 
 async function loadFromGitHub() {
   try {
-    const data = await githubRequest('GET');
-    if (data) papers = JSON.parse(atob(data.content));
-    else papers = [...SEED];
-    showToast("✅ Loaded from GitHub");
+    const data = await githubRequest("GET");
+    if (data) {
+      papers = JSON.parse(atob(data.content));
+      showToast("✅ Loaded from GitHub");
+    } else {
+      papers = [...SEED];
+    }
   } catch(e) {
     papers = [...SEED];
     showToast("⚠️ Using local data");
@@ -142,72 +130,18 @@ async function loadFromGitHub() {
   render();
 }
 
-async function saveToGitHub() {
-  try {
-    let sha = null;
-    const existing = await githubRequest('GET');
-    if (existing) sha = existing.sha;
-
-    const content = btoa(JSON.stringify(papers, null, 2));
-    await githubRequest('PUT', {
-      message: `Update ${new Date().toISOString().slice(0,16)}`,
-      content,
-      sha,
-      branch: config.branch
-    });
-    showToast("✅ Saved to GitHub");
-    return true;
-  } catch(e) {
-    showToast("⚠️ Saved locally only");
-    return false;
-  }
-}
-
-function save() {
-  localStorage.setItem('gennav_local', JSON.stringify(papers));
-  saveToGitHub();
-}
-
-// Parse & Render Functions (same as before)
-function parseAnswers(raw) {
-  return raw.trim().split('\n').map(l => l.trim().match(/([A-D])/i)?.[1]?.toUpperCase()).filter(Boolean);
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3500);
 }
 
 function render() {
-  const tabEl = document.getElementById('tabs');
-  tabEl.innerHTML = '';
-  papers.forEach(p => {
-    const b = document.createElement('button');
-    b.className = `tab ${p.id === activeTab ? 'active' : ''}`;
-    b.textContent = p.title;
-    b.onclick = () => { activeTab = p.id; editingPaperId = null; render(); };
-    tabEl.appendChild(b);
-  });
-
-  const addBtn = document.createElement('button');
-  addBtn.className = `tab ${activeTab === '__add__' ? 'active' : ''}`;
-  addBtn.textContent = '+ New Paper';
-  addBtn.onclick = () => { activeTab = '__add__'; editingPaperId = null; render(); };
-  tabEl.appendChild(addBtn);
-
-  const content = document.getElementById('content');
-  content.innerHTML = activeTab === '__add__' || editingPaperId ? renderForm() : renderPaperView();
+  document.getElementById("content").innerHTML = `<p style="text-align:center; padding:50px; color:#888;">${papers.length} papers loaded.<br><br>Try editing or adding a paper.</p>`;
 }
 
-function renderPaperView() {
-  const paper = papers.find(p => p.id === activeTab);
-  if (!paper) return '<p>No paper selected</p>';
-  // (Simplified for brevity - full grid etc. can be expanded)
-  return `<div class="paper-card"><h3>${paper.title}</h3><p>Questions: ${paper.answers.length}</p></div>`;
-}
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
-}
-
-// Init
+// Start
 loadConfig();
 loadFromGitHub();
 </script>
