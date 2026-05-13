@@ -23,6 +23,7 @@
   .tab.active { background: var(--gold); color: #0d1b2a; border-color: var(--gold); font-weight: 500; }
 
   .paper-card { background: var(--navy2); border: 1px solid var(--navy3); border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; }
+  .paper-header { padding: 16px 18px 14px; border-bottom: 1px solid var(--navy3); }
   .answer-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--navy3); }
   .answer-cell { background: var(--navy2); padding: 12px 6px; text-align: center; cursor: pointer; }
   .cell-num { font-size: 10px; color: var(--text2); }
@@ -32,11 +33,8 @@
   .btn-red { background: var(--red); color: white; }
   .small-btn { padding: 8px 14px; font-size: 13px; }
 
-  .settings-panel { background: var(--navy2); padding: 20px; border-radius: var(--radius); }
-  .form-label { display: block; margin: 15px 0 6px; color: var(--gold); font-size: 13px; }
-  .form-input { width: 100%; padding: 12px; background: var(--navy3); border: 1px solid #334766; border-radius: 8px; color: white; }
-
-  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--green); color: white; padding: 12px 24px; border-radius: 999px; z-index: 999; opacity: 0; transition: 0.3s; }
+  .readonly-banner { background: #1e3050; color: #c9a84c; text-align: center; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; }
+  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--green); color: white; padding: 12px 24px; border-radius: 30px; z-index: 999; opacity: 0; transition: 0.3s; }
   .toast.show { opacity: 1; }
 </style>
 </head>
@@ -46,8 +44,10 @@
     <div class="header-title">General Navigation<br>Answer Keys</div>
   </div>
 
+  <div id="mode-banner"></div>
+
   <div style="text-align:center; margin-bottom:15px;">
-    <button class="small-btn" onclick="showSettings()">⚙️ GitHub Settings</button>
+    <button class="small-btn" onclick="showSettings()">⚙️ Settings</button>
   </div>
 
   <div id="tabs"></div>
@@ -57,26 +57,48 @@
 <div class="toast" id="toast"></div>
 
 <script>
-let config = { token: "", owner: "", repo: "gennav-keys", branch: "main", filename: "gennav-keys.json" };
+// ============== YOUR DETAILS ==============
+const USERNAME = "Ayan1850";
+const REPO = "QB-Answer-Key";
+const PUBLIC_URL = `https://raw.githubusercontent.com/${USERNAME}/${REPO}/main/gennav-keys.json`;
+
+let config = { token: "", owner: USERNAME, repo: REPO, branch: "main", filename: "gennav-keys.json" };
 let papers = [];
 let activeTab = "apr";
 let editingPaperId = null;
+let isReadOnly = true;
 
 const SEED = [
   { id: 'apr', title: 'April Batch', code: 'GN-APR-2025', answers: ['C','C','C','B','D','C','B','C','B','B','B','D','C','D','D','A','D','D','B','B','C','D','D','D','B'] },
   { id: 'may', title: 'May Batch', code: 'GN-MAY-2025', answers: ['C','C','B','C','A','D','A','C','B','B','A','B','C','B','D','B','C','C','B','C'] }
 ];
 
-function loadConfig() { 
-  const saved = localStorage.getItem("gennav_config"); 
-  if (saved) config = JSON.parse(saved); 
+// Load Config
+function loadConfig() {
+  const saved = localStorage.getItem("gennav_config");
+  if (saved) config = JSON.parse(saved);
 }
-function saveConfig() { 
-  localStorage.setItem("gennav_config", JSON.stringify(config)); 
+function saveConfig() {
+  localStorage.setItem("gennav_config", JSON.stringify(config));
 }
 
+// Load Public Data (No Token Needed)
+async function loadPublicData() {
+  try {
+    const res = await fetch(PUBLIC_URL);
+    if (res.ok) {
+      papers = await res.json();
+      isReadOnly = true;
+      document.getElementById("mode-banner").innerHTML = `<div class="readonly-banner">📖 Public View Mode - Anyone with link can see latest updates</div>`;
+      return true;
+    }
+  } catch(e) {}
+  return false;
+}
+
+// GitHub API for Editing
 async function githubRequest(method = "GET", body = null) {
-  if (!config.token || !config.owner || !config.repo) throw new Error("Not configured");
+  if (!config.token) throw new Error("Token not set");
   const url = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.filename}`;
   const res = await fetch(method === "GET" ? url + `?ref=${config.branch}` : url, {
     method,
@@ -92,45 +114,16 @@ async function githubRequest(method = "GET", body = null) {
   return res.json();
 }
 
-function showToast(msg) {
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 3000);
-}
-
-window.showSettings = function() {
-  document.getElementById("content").innerHTML = `
-    <div class="settings-panel">
-      <h3 style="color:#c9a84c">GitHub Settings</h3>
-      <div class="form-label">Token</div>
-      <input class="form-input" id="g-token" type="password" value="${config.token}">
-      <div class="form-label">Username</div>
-      <input class="form-input" id="g-owner" value="${config.owner}">
-      <div class="form-label">Repo Name</div>
-      <input class="form-input" id="g-repo" value="${config.repo}">
-      <button class="btn" onclick="saveSettings()">Save & Test</button>
-    </div>`;
-};
-
-window.saveSettings = async function() {
-  config.token = document.getElementById("g-token").value.trim();
-  config.owner = document.getElementById("g-owner").value.trim();
-  config.repo = document.getElementById("g-repo").value.trim();
-  saveConfig();
-  showToast("Testing...");
-  try {
-    await githubRequest("GET");
-    showToast("✅ Connected!");
-    setTimeout(loadFromGitHub, 800);
-  } catch(e) { showToast("❌ Failed"); }
-};
-
 async function loadFromGitHub() {
+  if (await loadPublicData()) {
+    render();
+    return;
+  }
   try {
     const data = await githubRequest("GET");
     if (data) papers = JSON.parse(atob(data.content));
-    else papers = [...SEED];
+    isReadOnly = false;
+    document.getElementById("mode-banner").innerHTML = `<div class="readonly-banner" style="background:#4caf82;color:white;">✏️ Edit Mode Enabled</div>`;
   } catch(e) {
     papers = [...SEED];
   }
@@ -138,6 +131,7 @@ async function loadFromGitHub() {
 }
 
 async function saveToGitHub() {
+  if (isReadOnly || !config.token) return;
   try {
     let sha = null;
     const existing = await githubRequest("GET");
@@ -145,14 +139,14 @@ async function saveToGitHub() {
 
     const content = btoa(JSON.stringify(papers, null, 2));
     await githubRequest("PUT", {
-      message: `Update ${new Date().toISOString().slice(0,16)}`,
+      message: `Update Gen Nav Keys - ${new Date().toISOString().slice(0,16)}`,
       content: content,
       sha: sha,
       branch: config.branch
     });
     showToast("✅ Saved to GitHub");
   } catch(e) {
-    showToast("⚠️ Saved locally");
+    showToast("⚠️ Saved locally only");
   }
 }
 
@@ -167,10 +161,18 @@ function parseAnswers(raw) {
     .filter(Boolean);
 }
 
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2800);
+}
+
+// ================= UI =================
 function render() {
-  // Tabs
   const tabs = document.getElementById('tabs');
   tabs.innerHTML = '';
+
   papers.forEach(p => {
     const b = document.createElement('button');
     b.className = `tab ${p.id === activeTab ? 'active' : ''}`;
@@ -181,8 +183,8 @@ function render() {
 
   const addBtn = document.createElement('button');
   addBtn.className = `tab ${activeTab === '__add__' ? 'active' : ''}`;
-  addBtn.textContent = '+ New Paper';
-  addBtn.onclick = () => { activeTab = '__add__'; editingPaperId = null; render(); };
+  addBtn.textContent = isReadOnly ? 'View Only' : '+ New Paper';
+  if (!isReadOnly) addBtn.onclick = () => { activeTab = '__add__'; editingPaperId = null; render(); };
   tabs.appendChild(addBtn);
 
   const content = document.getElementById('content');
@@ -190,13 +192,13 @@ function render() {
     content.innerHTML = renderForm();
   } else {
     const paper = papers.find(p => p.id === activeTab);
-    content.innerHTML = paper ? renderPaper(paper) : '<p>No paper</p>';
+    content.innerHTML = paper ? renderPaper(paper) : '<p style="text-align:center;padding:40px;color:#666;">No paper selected</p>';
   }
 }
 
 function renderPaper(paper) {
   const grid = paper.answers.map((ans, i) => `
-    <div class="answer-cell" onclick="editAnswer('${paper.id}', ${i})">
+    <div class="answer-cell" onclick="${isReadOnly ? '' : `editAnswer('${paper.id}', ${i})`}">
       <div class="cell-num">Q${i+1}</div>
       <div class="cell-ans">${ans}</div>
     </div>
@@ -204,14 +206,15 @@ function renderPaper(paper) {
 
   return `
     <div class="paper-card">
-      <div style="padding:16px; border-bottom:1px solid var(--navy3);">
-        <strong>${paper.title}</strong><br>
-        <small>${paper.code} • ${paper.answers.length} questions</small>
+      <div class="paper-header">
+        <div><strong>${paper.title}</strong><br><small>${paper.code} • ${paper.answers.length} questions</small></div>
       </div>
       <div class="answer-grid">${grid}</div>
     </div>
-    <button class="btn" onclick="startEdit('${paper.id}')">✏️ Edit Full Paper</button>
-    <button class="btn btn-red" onclick="deletePaper('${paper.id}')">Delete Paper</button>
+    ${isReadOnly ? '' : `
+      <button class="btn" onclick="startEdit('${paper.id}')">✏️ Edit Full Paper</button>
+      <button class="btn btn-red" onclick="deletePaper('${paper.id}')">🗑 Delete Paper</button>
+    `}
   `;
 }
 
@@ -219,15 +222,22 @@ function renderForm() {
   const isEdit = !!editingPaperId;
   const paper = isEdit ? papers.find(p => p.id === editingPaperId) : null;
   return `
-    <div class="settings-panel">
-      <h3>${isEdit ? 'Edit Paper' : 'New Paper'}</h3>
-      <div class="form-label">Batch Name</div>
-      <input class="form-input" id="title" value="${paper?.title || ''}">
-      <div class="form-label">Code</div>
-      <input class="form-input" id="code" value="${paper?.code || ''}">
-      <div class="form-label">Answers (one per line)</div>
-      <textarea class="form-input" id="answers" rows="12">${paper ? paper.answers.map((a,i) => `${i+1} ${a}`).join('\n') : ''}</textarea>
-      <button class="btn" onclick="${isEdit ? 'updatePaper()' : 'addPaper()'}">${isEdit ? 'Update' : 'Save'} Paper</button>
+    <div class="paper-card" style="padding:20px;">
+      <h3 style="margin-bottom:15px;">${isEdit ? 'Edit Paper' : 'New Paper'}</h3>
+      <div style="margin-bottom:12px;">
+        <label style="display:block;color:var(--gold);font-size:13px;">Batch Name</label>
+        <input class="form-input" id="title" value="${paper?.title || ''}" style="width:100%;padding:12px;background:var(--navy3);border:1px solid #334766;border-radius:8px;color:white;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="display:block;color:var(--gold);font-size:13px;">Paper Code</label>
+        <input class="form-input" id="code" value="${paper?.code || ''}" style="width:100%;padding:12px;background:var(--navy3);border:1px solid #334766;border-radius:8px;color:white;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="display:block;color:var(--gold);font-size:13px;">Answers (one per line)</label>
+        <textarea id="answers" rows="15" style="width:100%;padding:12px;background:var(--navy3);border:1px solid #334766;border-radius:8px;color:white;resize:vertical;">${paper ? paper.answers.map((a,i)=>`${i+1} ${a}`).join('\n') : ''}</textarea>
+      </div>
+      <button class="btn" onclick="${isEdit ? 'updatePaper()' : 'addPaper()'}">${isEdit ? 'Update Paper' : 'Save New Paper'}</button>
+      ${isEdit ? `<button class="btn btn-red" onclick="cancelEdit()">Cancel</button>` : ''}
     </div>`;
 }
 
@@ -236,21 +246,16 @@ window.addPaper = function() {
   const code = document.getElementById('code').value.trim();
   const raw = document.getElementById('answers').value;
   const answers = parseAnswers(raw);
-  if (!title || answers.length === 0) return showToast("Invalid input");
+  if (!title || answers.length === 0) return showToast("Please fill all fields");
   const id = 'p_' + Date.now();
-  papers.push({id, title, code: code || title, answers});
+  papers.push({ id, title, code: code || title, answers });
   save();
   activeTab = id;
   render();
-  showToast("Paper saved");
+  showToast("✅ Paper Added");
 };
 
-window.startEdit = function(id) {
-  editingPaperId = id;
-  activeTab = '__add__';
-  render();
-};
-
+window.startEdit = function(id) { editingPaperId = id; activeTab = '__add__'; render(); };
 window.updatePaper = function() {
   const paper = papers.find(p => p.id === editingPaperId);
   if (!paper) return;
@@ -260,13 +265,14 @@ window.updatePaper = function() {
   save();
   editingPaperId = null;
   render();
-  showToast("Paper updated");
+  showToast("✅ Paper Updated");
 };
+window.cancelEdit = function() { editingPaperId = null; render(); };
 
 window.deletePaper = function(id) {
-  if (confirm("Delete this paper?")) {
+  if (confirm("Delete this paper permanently?")) {
     papers = papers.filter(p => p.id !== id);
-    activeTab = papers[0]?.id || "apr";
+    activeTab = papers[0] ? papers[0].id : "apr";
     save();
     render();
   }
@@ -275,15 +281,34 @@ window.deletePaper = function(id) {
 window.editAnswer = function(paperId, index) {
   const paper = papers.find(p => p.id === paperId);
   if (!paper) return;
-  const newAns = prompt(`Q${index+1} (${paper.answers[index]}) → New answer (A/B/C/D):`, paper.answers[index]);
-  if (newAns && /^[ABCD]$/i.test(newAns)) {
+  const newAns = prompt(`Q${index+1} is currently ${paper.answers[index]}\nNew answer (A/B/C/D):`, paper.answers[index]);
+  if (newAns && /^[A-D]$/i.test(newAns)) {
     paper.answers[index] = newAns.toUpperCase();
     save();
     render();
   }
 };
 
-// Start App
+window.showSettings = function() {
+  document.getElementById("content").innerHTML = `
+    <div class="paper-card" style="padding:20px;">
+      <h3>GitHub Settings (For Editing)</h3>
+      <div style="margin:15px 0;">
+        <label style="display:block;color:var(--gold);">Personal Access Token</label>
+        <input type="password" id="token" value="${config.token}" style="width:100%;padding:12px;background:var(--navy3);border:1px solid #334766;border-radius:8px;color:white;">
+      </div>
+      <button class="btn" onclick="saveToken()">Save Token & Enable Editing</button>
+    </div>`;
+};
+
+window.saveToken = function() {
+  config.token = document.getElementById("token").value.trim();
+  saveConfig();
+  showToast("Token saved. Reloading...");
+  setTimeout(() => location.reload(), 800);
+};
+
+// Start the App
 loadConfig();
 loadFromGitHub();
 </script>
