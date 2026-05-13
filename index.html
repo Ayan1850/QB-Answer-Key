@@ -14,9 +14,9 @@
     --green: #4caf82; --red: #e05c5c; --radius: 12px;
   }
   body { background: var(--navy); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
-  .app { max-width: 480px; margin: 0 auto; padding: 24px 16px 80px; }
+  .app { max-width: 480px; margin: 0 auto; padding: 24px 16px 100px; }
 
-  .header { text-align: center; margin-bottom: 28px; padding-top: 8px; }
+  .header { text-align: center; margin-bottom: 20px; padding-top: 8px; }
   .header-eyebrow { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.2em; color: var(--gold); text-transform: uppercase; margin-bottom: 6px; }
   .header-title { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--cream); line-height: 1.15; }
   .header-sub { font-size: 12px; color: var(--text2); margin-top: 6px; }
@@ -35,7 +35,7 @@
   .paper-badge { font-family: 'DM Mono', monospace; font-size: 10px; padding: 4px 10px; border-radius: 20px; background: var(--navy3); color: var(--gold); flex-shrink: 0; }
 
   .answer-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--navy3); }
-  .answer-cell { background: var(--navy2); padding: 12px 6px; text-align: center; transition: background 0.15s; }
+  .answer-cell { background: var(--navy2); padding: 12px 6px; text-align: center; transition: background 0.15s; cursor: pointer; }
   .answer-cell:hover { background: var(--navy3); }
   .cell-num { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text2); margin-bottom: 4px; }
   .cell-ans { font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 500; color: var(--gold); }
@@ -46,22 +46,19 @@
   .stat-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text2); }
   .stat-val { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--cream); font-weight: 500; }
 
-  .add-form { background: var(--navy2); border: 1px dashed var(--navy3); border-radius: var(--radius); padding: 20px; }
+  .add-form, .edit-form { background: var(--navy2); border: 1px dashed var(--navy3); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; }
   .form-title { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--cream); margin-bottom: 18px; }
   .form-row { margin-bottom: 14px; }
   .form-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--gold); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; display: block; }
-  .form-input { width: 100%; background: var(--navy3); border: 1px solid #2a4060; border-radius: 8px; padding: 10px 12px; color: var(--cream); font-family: 'DM Mono', monospace; font-size: 13px; outline: none; transition: border-color 0.2s; }
+  .form-input { width: 100%; background: var(--navy3); border: 1px solid #2a4060; border-radius: 8px; padding: 10px 12px; color: var(--cream); font-family: 'DM Mono', monospace; font-size: 13px; outline: none; }
   .form-input:focus { border-color: var(--gold); }
-  .form-input::placeholder { color: #5a7a96; }
-  textarea.form-input { min-height: 130px; resize: vertical; line-height: 1.8; }
-  .form-hint { font-size: 11px; color: var(--text2); margin-top: 5px; }
-  .btn-save { width: 100%; padding: 12px; background: var(--gold); color: #0d1b2a; font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; border: none; border-radius: 8px; cursor: pointer; transition: background 0.2s; margin-top: 4px; }
-  .btn-save:hover { background: var(--gold2); }
-  .btn-delete { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--red); background: none; border: 1px solid rgba(224,92,92,0.3); border-radius: 20px; cursor: pointer; padding: 6px 14px; opacity: 0.8; transition: opacity 0.2s; }
-  .btn-delete:hover { opacity: 1; }
-  .delete-row { text-align: center; margin-top: 10px; }
+  textarea.form-input { min-height: 160px; resize: vertical; line-height: 1.8; }
 
-  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--green); color: #fff; font-family: 'DM Mono', monospace; font-size: 12px; padding: 10px 22px; border-radius: 30px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 99; white-space: nowrap; }
+  .btn { width: 100%; padding: 12px; background: var(--gold); color: #0d1b2a; font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; border: none; border-radius: 8px; cursor: pointer; margin: 8px 0; }
+  .btn-red { background: var(--red); color: white; }
+  .small-btn { padding: 6px 12px; font-size: 11px; background: var(--navy3); color: var(--gold); border: none; border-radius: 6px; cursor: pointer; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--green); color: #fff; font-family: 'DM Mono', monospace; font-size: 12px; padding: 10px 22px; border-radius: 30px; opacity: 0; transition: opacity 0.3s; z-index: 99; white-space: nowrap; }
   .toast.show { opacity: 1; }
 </style>
 </head>
@@ -70,127 +67,318 @@
   <div class="header">
     <div class="header-eyebrow">DGCA · CPL / ATPL</div>
     <div class="header-title">General Navigation<br>Answer Keys</div>
-    <div class="header-sub">Tap any batch to view &nbsp;·&nbsp; Add future papers anytime</div>
+    <div class="header-sub">Synced with GitHub • Access from anywhere</div>
   </div>
+
+  <div style="text-align:center; margin:15px 0;">
+    <button class="small-btn" onclick="showGitHubSettings()">⚙️ GitHub Settings</button>
+  </div>
+
   <div class="tabs" id="tabs"></div>
   <div id="content"></div>
 </div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-const SEED = [
-  { id:'apr', title:'April Batch', code:'GN-APR-2025',
-    answers:['C','C','C','B','D','C','B','C','B','B','B','D','C','D','D','A','D','D','B','B','C','D','D','D','B'] },
-  { id:'may', title:'May Batch', code:'GN-MAY-2025',
-    answers:['C','C','B','C','A','D','A','C','B','B','A','B','C','B','D','B','C','C','B','C'] }
-];
-const KEY = 'gennav_site_v1';
-let papers = [], activeTab = 'apr';
+// =============== CONFIG & DATA ===============
+const CONFIG_KEY = 'gennav_github_config';
+let config = { token: '', owner: '', repo: '', branch: 'main', filename: 'gennav-keys.json' };
+let papers = [];
+let activeTab = 'apr';
+let editingPaperId = null;
 
-function load() {
-  try { const r = localStorage.getItem(KEY); papers = r ? JSON.parse(r) : [...SEED]; }
-  catch { papers = [...SEED]; }
+const SEED = [
+  { id: 'apr', title: 'April Batch', code: 'GN-APR-2025', answers: ['C','C','C','B','D','C','B','C','B','B','B','D','C','D','D','A','D','D','B','B','C','D','D','D','B'] },
+  { id: 'may', title: 'May Batch', code: 'GN-MAY-2025', answers: ['C','C','B','C','A','D','A','C','B','B','A','B','C','B','D','B','C','C','B','C'] }
+];
+
+// Load Config
+function loadConfig() {
+  try {
+    const saved = localStorage.getItem(CONFIG_KEY);
+    if (saved) config = JSON.parse(saved);
+  } catch(e) {}
+}
+
+function saveConfig() {
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+}
+
+// GitHub API Helper
+async function githubRequest(path = '', method = 'GET', body = null) {
+  if (!config.token || !config.owner || !config.repo) throw new Error("GitHub not configured");
+
+  const url = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.filename}${path ? '/' + path : ''}`;
+
+  const headers = {
+    'Authorization': `token ${config.token}`,
+    'Accept': 'application/vnd.github.v3+json',
+    'Content-Type': 'application/json'
+  };
+
+  const options = { method, headers };
+  if (body) options.body = JSON.stringify(body);
+
+  const res = await fetch(url + (method === 'GET' ? '?ref=' + config.branch : ''), options);
+  if (!res.ok) {
+    if (res.status === 404) return null;
+    throw new Error(`GitHub Error ${res.status}`);
+  }
+  return res.json();
+}
+
+// Load from GitHub
+async function loadFromGitHub() {
+  try {
+    const data = await githubRequest();
+    if (data) {
+      const content = JSON.parse(atob(data.content));
+      papers = Array.isArray(content) ? content : SEED;
+      showToast("✅ Loaded from GitHub");
+    } else {
+      papers = [...SEED];
+    }
+  } catch(e) {
+    console.log("Using local data");
+    papers = [...SEED];
+  }
   render();
 }
-function save() { try { localStorage.setItem(KEY, JSON.stringify(papers)); } catch {} }
 
+// Save to GitHub
+async function saveToGitHub() {
+  try {
+    let sha = null;
+    const existing = await githubRequest();
+    if (existing) sha = existing.sha;
+
+    const content = btoa(JSON.stringify(papers, null, 2));
+
+    await githubRequest('', 'PUT', {
+      message: `Update Gen Nav Keys - ${new Date().toISOString().slice(0,16)}`,
+      content: content,
+      sha: sha,
+      branch: config.branch
+    });
+    showToast("✅ Saved to GitHub");
+  } catch(e) {
+    showToast("⚠️ Saved locally only");
+    console.error(e);
+  }
+}
+
+function save() {
+  localStorage.setItem('gennav_keys_local', JSON.stringify(papers));
+  saveToGitHub();
+}
+
+// Parse answers
 function parseAnswers(raw) {
   return raw.trim().split('\n')
-    .map(l => { const m = l.trim().match(/^\d+\s*[.:\-]?\s*([A-Da-d])/); return m ? m[1].toUpperCase() : null; })
+    .map(l => {
+      const m = l.trim().match(/^\d+[\s.:-]*([A-Da-d])/i);
+      return m ? m[1].toUpperCase() : null;
+    })
     .filter(Boolean);
 }
-function dotColor(l) { return {A:'#4caf82',B:'#c9a84c',C:'#6ab0e8',D:'#e05c5c'}[l]; }
 
+function dotColor(l) {
+  return {A:'#4caf82', B:'#c9a84c', C:'#6ab0e8', D:'#e05c5c'}[l] || '#888';
+}
+
+// Render UI
 function render() {
+  // Tabs
   const tabEl = document.getElementById('tabs');
   tabEl.innerHTML = '';
   papers.forEach(p => {
     const b = document.createElement('button');
-    b.className = 'tab' + (p.id === activeTab ? ' active' : '');
+    b.className = `tab ${p.id === activeTab ? 'active' : ''}`;
     b.textContent = p.title;
-    b.onclick = () => { activeTab = p.id; render(); };
+    b.onclick = () => { activeTab = p.id; editingPaperId = null; render(); };
     tabEl.appendChild(b);
   });
+
   const addBtn = document.createElement('button');
-  addBtn.className = 'tab tab-add' + (activeTab === '__add__' ? ' active' : '');
-  addBtn.textContent = '+ New Paper';
-  addBtn.onclick = () => { activeTab = '__add__'; render(); };
+  addBtn.className = `tab tab-add ${activeTab === '__add__' ? 'active' : ''}`;
+  addBtn.textContent = '+ New';
+  addBtn.onclick = () => { activeTab = '__add__'; editingPaperId = null; render(); };
   tabEl.appendChild(addBtn);
 
-  const el = document.getElementById('content');
-  if (activeTab === '__add__') {
-    el.innerHTML = `
-      <div class="add-form">
-        <div class="form-title">Add New Answer Key</div>
-        <div class="form-row">
-          <label class="form-label">Batch Name</label>
-          <input class="form-input" id="f-title" placeholder="e.g. June Batch" />
-        </div>
-        <div class="form-row">
-          <label class="form-label">Paper Code <span style="color:#5a7a96;font-size:10px;">(optional)</span></label>
-          <input class="form-input" id="f-code" placeholder="e.g. GN-JUN-2025" />
-        </div>
-        <div class="form-row">
-          <label class="form-label">Paste Answer Key</label>
-          <textarea class="form-input" id="f-answers" placeholder="1C&#10;2A&#10;3B&#10;&#10;or&#10;&#10;1 C&#10;2 A&#10;3 B"></textarea>
-          <div class="form-hint">Any format works — 1C &nbsp;·&nbsp; 1 C &nbsp;·&nbsp; 1. C &nbsp;·&nbsp; 1: C</div>
-        </div>
-        <button class="btn-save" onclick="addPaper()">Save Answer Key</button>
-      </div>`;
-    return;
+  const content = document.getElementById('content');
+  content.innerHTML = '';
+
+  if (activeTab === '__add__' || editingPaperId) {
+    renderForm(content);
+  } else {
+    const paper = papers.find(p => p.id === activeTab);
+    if (paper) renderPaper(content, paper);
   }
-  const paper = papers.find(p => p.id === activeTab);
-  if (!paper) { el.innerHTML = ''; return; }
+}
+
+function renderPaper(container, paper) {
   const counts = {A:0,B:0,C:0,D:0};
   paper.answers.forEach(a => counts[a] = (counts[a]||0)+1);
-  const grid = paper.answers.map((a,i) =>
-    `<div class="answer-cell"><div class="cell-num">Q${i+1}</div><div class="cell-ans">${a}</div></div>`).join('');
-  const stats = ['A','B','C','D'].map(l =>
-    `<div class="stat-item"><div class="stat-dot" style="background:${dotColor(l)}"></div><span class="stat-label">${l}</span><span class="stat-val">${counts[l]||0}</span></div>`).join('');
-  el.innerHTML = `
+
+  const grid = paper.answers.map((a,i) => `
+    <div class="answer-cell" onclick="editSingleAnswer('${paper.id}', ${i})">
+      <div class="cell-num">Q${i+1}</div>
+      <div class="cell-ans" style="color:${dotColor(a)}">${a}</div>
+    </div>
+  `).join('');
+
+  const stats = ['A','B','C','D'].map(l => `
+    <div class="stat-item">
+      <div class="stat-dot" style="background:${dotColor(l)}"></div>
+      <span class="stat-label">${l}</span><span class="stat-val">${counts[l]||0}</span>
+    </div>
+  `).join('');
+
+  container.innerHTML = `
     <div class="paper-card">
       <div class="paper-header">
         <div>
           <div class="paper-title">${paper.title}</div>
-          <div class="paper-meta">${paper.code} &nbsp;·&nbsp; ${paper.answers.length} questions</div>
+          <div class="paper-meta">${paper.code} • ${paper.answers.length} Qs</div>
         </div>
-        <span class="paper-badge">${paper.answers.length} Qs</span>
+        <span class="paper-badge">${paper.answers.length}Qs</span>
       </div>
       <div class="answer-grid">${grid}</div>
       <div class="stats-bar">${stats}</div>
     </div>
-    <div class="delete-row">
-      <button class="btn-delete" onclick="deletePaper('${paper.id}')">✕ Delete this paper</button>
-    </div>`;
+    <button class="btn" onclick="startEdit('${paper.id}')">✏️ Edit Paper</button>
+    <button class="btn btn-red" onclick="deletePaper('${paper.id}')">🗑 Delete Paper</button>
+  `;
 }
 
+function renderForm(container) {
+  const isEdit = !!editingPaperId;
+  const paper = isEdit ? papers.find(p => p.id === editingPaperId) : null;
+
+  container.innerHTML = `
+    <div class="${isEdit ? 'edit-form' : 'add-form'}">
+      <div class="form-title">${isEdit ? 'Edit Paper' : 'Add New Paper'}</div>
+      <div class="form-row">
+        <label class="form-label">Batch Name</label>
+        <input class="form-input" id="f-title" value="${paper?.title || ''}" placeholder="June Batch">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Paper Code</label>
+        <input class="form-input" id="f-code" value="${paper?.code || ''}" placeholder="GN-JUN-2025">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Answers (one per line)</label>
+        <textarea class="form-input" id="f-answers">${paper ? paper.answers.map((a,i)=>`${i+1} ${a}`).join('\n') : ''}</textarea>
+      </div>
+      <button class="btn" onclick="${isEdit ? 'updatePaper()' : 'addPaper()'}">${isEdit ? 'Update Paper' : 'Save Paper'}</button>
+      ${isEdit ? `<button class="btn btn-red" onclick="cancelEdit()">Cancel</button>` : ''}
+    </div>
+  `;
+}
+
+// CRUD Functions
 function addPaper() {
   const title = document.getElementById('f-title').value.trim();
-  const code  = document.getElementById('f-code').value.trim();
-  const raw   = document.getElementById('f-answers').value.trim();
-  if (!title || !raw) { showToast('Fill in batch name and answers'); return; }
+  const code = document.getElementById('f-code').value.trim();
+  const raw = document.getElementById('f-answers').value;
+
+  if (!title || !raw) return showToast("Title and answers required");
+
   const answers = parseAnswers(raw);
-  if (!answers.length) { showToast('Could not parse any answers'); return; }
+  if (answers.length === 0) return showToast("No answers found");
+
   const id = 'p_' + Date.now();
   papers.push({ id, title, code: code || title, answers });
-  save(); activeTab = id; render();
-  showToast('✓ ' + answers.length + ' answers saved');
+  save();
+  activeTab = id;
+  showToast(`✅ ${answers.length} questions saved`);
+  render();
+}
+
+function startEdit(id) {
+  editingPaperId = id;
+  activeTab = '__add__';
+  render();
+}
+
+function updatePaper() {
+  if (!editingPaperId) return;
+  const paper = papers.find(p => p.id === editingPaperId);
+  if (!paper) return;
+
+  const title = document.getElementById('f-title').value.trim();
+  const code = document.getElementById('f-code').value.trim();
+  const raw = document.getElementById('f-answers').value;
+
+  const answers = parseAnswers(raw);
+  if (!title || answers.length === 0) return showToast("Invalid data");
+
+  paper.title = title;
+  paper.code = code || title;
+  paper.answers = answers;
+
+  save();
+  editingPaperId = null;
+  activeTab = paper.id;
+  showToast("✅ Paper updated");
+  render();
+}
+
+function cancelEdit() {
+  editingPaperId = null;
+  render();
 }
 
 function deletePaper(id) {
-  if (!confirm('Delete this paper?')) return;
+  if (!confirm("Delete this paper?")) return;
   papers = papers.filter(p => p.id !== id);
-  activeTab = papers.length ? papers[0].id : '__add__';
-  save(); render(); showToast('Paper deleted');
+  activeTab = papers[0] ? papers[0].id : '__add__';
+  save();
+  render();
+}
+
+window.editSingleAnswer = async function(paperId, index) {
+  const paper = papers.find(p => p.id === paperId);
+  if (!paper) return;
+  const current = paper.answers[index];
+  const newAns = prompt(`Q${index+1} is currently ${current}\nEnter new answer (A/B/C/D):`, current);
+  if (newAns && ['A','B','C','D'].includes(newAns.toUpperCase())) {
+    paper.answers[index] = newAns.toUpperCase();
+    save();
+    render();
+    showToast(`Q${index+1} updated`);
+  }
+};
+
+function showGitHubSettings() {
+  const token = prompt("GitHub Personal Access Token:", config.token || "");
+  if (token === null) return;
+  
+  const owner = prompt("GitHub Username:", config.owner || "");
+  if (!owner) return;
+  
+  const repo = prompt("Repository Name:", config.repo || "gennav-keys");
+
+  config.token = token.trim();
+  config.owner = owner.trim();
+  config.repo = repo.trim();
+  saveConfig();
+
+  showToast("Settings saved. Loading from GitHub...");
+  loadFromGitHub();
 }
 
 function showToast(msg) {
   const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
+  t.textContent = msg;
+  t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-load();
+// Initialize
+loadConfig();
+loadFromGitHub();
 </script>
 </body>
 </html>
